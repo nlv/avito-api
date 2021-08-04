@@ -3,6 +3,6 @@
 
 BEGIN;
 
-INSERT INTO test_table (name) VALUES ('first');
+INSERT INTO test_table (name, col1, col2, col3) VALUES ('first', 'Колонка1', 'Колонка2', 'Колонка3');
 
 COMMIT;
