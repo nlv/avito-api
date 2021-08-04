@@ -1,0 +1,61 @@
+name:                avito-api
+version:             0.1.0.0
+github:              "nlv/avito-api"
+license:             BSD3
+author:              "Leon Nikitin"
+maintainer:          "nlvomsk@gmail.com"
+copyright:           "Leon Nikitin"
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/nlv/avito-api#readme>
+
+dependencies:
+- base
+- text
+- transformers
+- beam-core
+- beam-postgres
+- postgresql-simple
+- servant
+- servant-server
+- aeson
+- microlens
+- wai
+# - wai-extra
+- wai-cors
+- warp
+
+
+library:
+  source-dirs: src
+
+executables:
+  avito-api-exe:
+    main: exe/Server/Main.hs
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - avito-api
+
+tests:
+  avito-api-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - avito-api
