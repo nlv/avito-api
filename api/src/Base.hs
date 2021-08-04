@@ -38,16 +38,14 @@ instance Database be AvitoDb
 avitoDb :: DatabaseSettings be AvitoDb
 avitoDb = defaultDbSettings `withDbModification`
   dbModification {
-    _testTable =
-      modifyTable (\_ -> "test_table") 
-      $ 
-      tableModification {
-         _testTableId   = fieldNamed "id",
-         _testTableName = fieldNamed "name",
-         _testTableCol1 = fieldNamed "col1",
-         _testTableCol2 = fieldNamed "col2",
-         _testTableCol3 = fieldNamed "col3"
-      }
+    _testTable = setEntityName "test_table" <>
+                  modifyTableFields tableModification {
+                    _testTableId   = fieldNamed "id",
+                    _testTableName = fieldNamed "name",
+                    _testTableCol1 = fieldNamed "col1",
+                    _testTableCol2 = fieldNamed "col2",
+                    _testTableCol3 = fieldNamed "col3"
+                  }
   }
 
 TestTable
@@ -58,7 +56,7 @@ TestTable
   (LensFor testTableCol3) = tableLenses
 
 AvitoDb 
-  (TableLens testTable) = dbLenses
+  (TableLens testTable) = dbLenses 
 
 getTestTableByName name = do
   ps <- runSelectReturningList $ select $ do
