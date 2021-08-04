@@ -1,0 +1,6 @@
+%syntax-version=1.0.0
+%project=avito-schema-test
+%uri=https://bitbucket.org/nlvomsk/avito-schema-test/
+
+add_test_table 2021-08-04T04:55:10Z Leon Nikitin <nlvomsk@gmail.com> # Добавляем тестовую таблицу
+insert_first_record [add_test_table] 2021-08-04T05:48:37Z Leon Nikitin <nlvomsk@gmail.com> # Тестовая строка
