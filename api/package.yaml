@@ -28,6 +28,7 @@ dependencies:
 - postgresql-simple
 - servant
 - servant-server
+- servant-options
 - aeson
 - microlens
 - wai

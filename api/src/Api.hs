@@ -14,6 +14,6 @@ type Api = DataApi -- :<|> SingerApi
 
 type DataApi = 
        "data" :> "test_table" :> Capture "name" Text :> Get '[JSON] TestTable
-   :<|>  "data" :> "test_table" :> Capture "name" Text :> ReqBody '[] TestTable :> Post '[JSON] ()
+   :<|>  "data" :> "test_table" :> Capture "name" Text :> ReqBody '[JSON] TestTableR :> Post '[JSON] ()
 
 

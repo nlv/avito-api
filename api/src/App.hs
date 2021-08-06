@@ -8,6 +8,7 @@ import Data.Text
 import Network.Wai
 import Network.Wai.Handler.Warp
 import Network.Wai.Middleware.Cors
+import Network.Wai.Middleware.Servant.Options
 import Servant
 import System.IO
 import Data
@@ -30,7 +31,9 @@ run = do
   runSettings settings =<< mkApp
 
 mkApp :: IO Application
-mkApp = return $ simpleCors (serve api server)
+mkApp = return $ cors (const $ Just policy) $ provideOptions api $ serve api server
+  where
+    policy = simpleCorsResourcePolicy { corsRequestHeaders = [ "content-type" ] }
 
 server :: Server Api
 server =
@@ -46,11 +49,11 @@ getTestTableByName name = do
     Just p -> pure p
     _      -> throwError err404
 
-postTestTableRow :: Text -> TestTable -> Handler ()
-postTestTableRow name t = do
+postTestTableRow :: Text -> TestTableR -> Handler ()
+postTestTableRow name tr = do
   liftIO $ do
     conn <- liftIO $ Pg.connectPostgreSQL "dbname=avito user=nlv password=1" 
-    runBeamPostgresDebug putStrLn conn (B.postTestTable name t)
+    runBeamPostgresDebug putStrLn conn (B.postTestTable name tr)
     pure ()
 
 

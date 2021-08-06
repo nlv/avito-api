@@ -66,13 +66,13 @@ getTestTableByName name = do
         pure t
   pure $ if List.length ps > 0 then Just $ List.head ps else Nothing
 
-postTestTable name t = do
+postTestTable name tr = do
         runUpdate $
           update (avitoDb ^. testTable)
             (\row -> mconcat [ 
-                               row ^. testTableCol1 <-. val_ (t ^. testTableCol1)
-                             , row ^. testTableCol2 <-. val_ (t ^. testTableCol2)
-                             , row ^. testTableCol3 <-. val_ (t ^. testTableCol3)
+                               row ^. testTableCol1 <-. (val_ $ Just $ _testTableRCol1 tr)
+                             , row ^. testTableCol2 <-. (val_ $ Just $ _testTableRCol2 tr)
+                             , row ^. testTableCol3 <-. (val_ $ Just $ _testTableRCol3 tr)
                              ])
             (\row -> row ^. testTableName ==. val_ "first")
 
