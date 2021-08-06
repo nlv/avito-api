@@ -11,6 +11,7 @@ import Network.Wai.Middleware.Cors
 import Servant
 import System.IO
 import Data
+import Data.Int
 import Api
 import qualified Base as B
 import Database.Beam.Postgres
@@ -33,15 +34,23 @@ mkApp = return $ simpleCors (serve api server)
 
 server :: Server Api
 server =
-  getTestTableByName
+       getTestTableByName
+  :<|> postTestTableRow 
 
 getTestTableByName :: Text -> Handler TestTable
 getTestTableByName name = do
   p' <- liftIO $ do
     conn <- liftIO $ Pg.connectPostgreSQL "dbname=avito user=nlv password=1" 
-    runBeamPostgres conn (B.getTestTableByName name)
     runBeamPostgresDebug putStrLn conn (B.getTestTableByName name)
   case p' of
     Just p -> pure p
     _      -> throwError err404
+
+postTestTableRow :: Text -> TestTable -> Handler ()
+postTestTableRow name t = do
+  liftIO $ do
+    conn <- liftIO $ Pg.connectPostgreSQL "dbname=avito user=nlv password=1" 
+    runBeamPostgresDebug putStrLn conn (B.postTestTable name t)
+    pure ()
+
 

@@ -8,7 +8,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Base (
-  getTestTableByName
+    getTestTableByName
+  , postTestTable   
   )  where
 
 import GHC.Generics
@@ -64,3 +65,17 @@ getTestTableByName name = do
         guard_ (t ^. testTableName ==. val_ name)
         pure t
   pure $ if List.length ps > 0 then Just $ List.head ps else Nothing
+
+postTestTable name t = do
+        runUpdate $
+          update (avitoDb ^. testTable)
+            (\row -> mconcat [ 
+                               row ^. testTableCol1 <-. val_ (t ^. testTableCol1)
+                             , row ^. testTableCol2 <-. val_ (t ^. testTableCol2)
+                             , row ^. testTableCol3 <-. val_ (t ^. testTableCol3)
+                             ])
+            (\row -> row ^. testTableName ==. val_ "first")
+
+
+
+
