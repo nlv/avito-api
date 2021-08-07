@@ -8,12 +8,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Base (
-    getTestTableByName
-  , postTestTable   
+    getTestTableById
+  , replaceTestTableWith
   )  where
 
 import GHC.Generics
 import Database.Beam
+import Database.Beam.Backend.SQL
 import Data.Text as Text
 import Data.List as List
 import Data.Int
@@ -42,7 +43,6 @@ avitoDb = defaultDbSettings `withDbModification`
     _testTable = setEntityName "test_table" <>
                   modifyTableFields tableModification {
                     _testTableId   = fieldNamed "id",
-                    _testTableName = fieldNamed "name",
                     _testTableCol1 = fieldNamed "col1",
                     _testTableCol2 = fieldNamed "col2",
                     _testTableCol3 = fieldNamed "col3"
@@ -51,7 +51,6 @@ avitoDb = defaultDbSettings `withDbModification`
 
 TestTable
   (LensFor testTableId)    
-  (LensFor testTableName)
   (LensFor testTableCol1)
   (LensFor testTableCol2)
   (LensFor testTableCol3) = tableLenses
@@ -59,22 +58,15 @@ TestTable
 AvitoDb 
   (TableLens testTable) = dbLenses 
 
-getTestTableByName name = do
-  ps <- runSelectReturningList $ select $ do
-        t <- all_ (avitoDb ^. testTable)
-        guard_ (t ^. testTableName ==. val_ name)
-        pure t
+getTestTableById id = do
+  ps <- runSelectReturningList $ lookup_ (avitoDb ^. testTable) (TestTableId id)
   pure $ if List.length ps > 0 then Just $ List.head ps else Nothing
 
-postTestTable name tr = do
-        runUpdate $
-          update (avitoDb ^. testTable)
-            (\row -> mconcat [ 
-                               row ^. testTableCol1 <-. (val_ $ Just $ _testTableRCol1 tr)
-                             , row ^. testTableCol2 <-. (val_ $ Just $ _testTableRCol2 tr)
-                             , row ^. testTableCol3 <-. (val_ $ Just $ _testTableRCol3 tr)
-                             ])
-            (\row -> row ^. testTableName ==. val_ "first")
+replaceTestTableWith ts = do
+  runDelete $ Database.Beam.delete (avitoDb ^. testTable) (const $ val_ True)
+  runInsert $ Database.Beam.insert (avitoDb ^. testTable) (insertValues ts)
+
+
 
 
 

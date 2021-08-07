@@ -37,23 +37,24 @@ mkApp = return $ cors (const $ Just policy) $ provideOptions api $ serve api ser
 
 server :: Server Api
 server =
-       getTestTableByName
-  :<|> postTestTableRow 
+       getTestTableById
+  :<|> postTestTable
 
-getTestTableByName :: Text -> Handler TestTable
-getTestTableByName name = do
+getTestTableById :: Int32 -> Handler TestTable
+getTestTableById id = do
   p' <- liftIO $ do
     conn <- liftIO $ Pg.connectPostgreSQL "dbname=avito user=nlv password=1" 
-    runBeamPostgresDebug putStrLn conn (B.getTestTableByName name)
+    runBeamPostgresDebug putStrLn conn (B.getTestTableById id)
+  -- pure p'
   case p' of
     Just p -> pure p
     _      -> throwError err404
 
-postTestTableRow :: Text -> TestTableR -> Handler ()
-postTestTableRow name tr = do
+postTestTable :: [TestTable] -> Handler ()
+postTestTable ts = do
   liftIO $ do
     conn <- liftIO $ Pg.connectPostgreSQL "dbname=avito user=nlv password=1" 
-    runBeamPostgresDebug putStrLn conn (B.postTestTable name tr)
+    Pg.withTransaction conn $ runBeamPostgresDebug putStrLn conn $ B.replaceTestTableWith ts
     pure ()
 
 

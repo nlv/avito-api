@@ -2,6 +2,6 @@
 
 BEGIN;
 
-SELECT id FROM test_table WHERE name = 'first';
+SELECT id FROM test_table WHERE id = 1;
 
 ROLLBACK;

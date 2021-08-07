@@ -13,7 +13,7 @@ import Data.Int
 type Api = DataApi -- :<|> SingerApi
 
 type DataApi = 
-       "data" :> "test_table" :> Capture "name" Text :> Get '[JSON] TestTable
-   :<|>  "data" :> "test_table" :> Capture "name" Text :> ReqBody '[JSON] TestTableR :> Post '[JSON] ()
+       "data" :> "test_table" :> Capture "id" Int32 :> Get '[JSON] TestTable
+  :<|> "data" :> "test_table" :> ReqBody '[JSON] [TestTable] :> Post '[JSON] ()
 
 

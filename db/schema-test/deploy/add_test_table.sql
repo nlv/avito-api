@@ -3,8 +3,7 @@
 BEGIN;
 
 CREATE TABLE test_table (
-     id           SERIAL      PRIMARY KEY
-    ,name         TEXT        NOT NULL UNIQUE
+     id           INT    PRIMARY KEY CHECK (id > 0)
     ,col1         TEXT        
     ,col2         TEXT        
     ,col3         TEXT        
