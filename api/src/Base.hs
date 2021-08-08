@@ -9,12 +9,17 @@
 
 module Base (
     getTestTableById
+  , getTestTable
   , replaceTestTableWith
+
+  -- ,avitoDb
+  -- ,testTable
   )  where
 
 import GHC.Generics
 import Database.Beam
 import Database.Beam.Backend.SQL
+import qualified Database.Beam.Postgres as Pg
 import Data.Text as Text
 import Data.List as List
 import Data.Int
@@ -61,6 +66,17 @@ AvitoDb
 getTestTableById id = do
   ps <- runSelectReturningList $ lookup_ (avitoDb ^. testTable) (TestTableId id)
   pure $ if List.length ps > 0 then Just $ List.head ps else Nothing
+
+ 
+-- getTestTable = do
+--   letsql
+--   ps <- runSelectReturningList $ select $ all_ (avitoDb ^. testTable) :: (MonadBeam be m, BeamSqlBackend be, FromBackendRow be a) => SqlSelect be a -> m [a]
+--   pure ps
+
+getTestTable :: Pg.Pg [TestTable]
+getTestTable = do
+  ps <- runSelectReturningList $ select $ all_ (avitoDb ^. testTable)  
+  pure ps
 
 replaceTestTableWith ts = do
   runDelete $ Database.Beam.delete (avitoDb ^. testTable) (const $ val_ True)

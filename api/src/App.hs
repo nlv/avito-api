@@ -18,6 +18,8 @@ import qualified Base as B
 import Database.Beam.Postgres
 import qualified Database.PostgreSQL.Simple as Pg
 
+-- import Lens.Micro
+
 api :: Proxy Api
 api = Proxy
 
@@ -38,6 +40,7 @@ mkApp = return $ cors (const $ Just policy) $ provideOptions api $ serve api ser
 server :: Server Api
 server =
        getTestTableById
+  :<|> getTestTable     
   :<|> postTestTable
 
 getTestTableById :: Int32 -> Handler TestTable
@@ -49,6 +52,14 @@ getTestTableById id = do
   case p' of
     Just p -> pure p
     _      -> throwError err404
+
+getTestTable :: Handler [TestTable]
+getTestTable = do
+  ps <- liftIO $ do
+    conn <- liftIO $ Pg.connectPostgreSQL "dbname=avito user=nlv password=1" 
+    runBeamPostgresDebug putStrLn conn (B.getTestTable)
+    -- runBeamPostgresDebug putStrLn conn (runSelectReturningList $ select $ all_ (B.avitoDb ^. B.testTable))
+  pure ps
 
 postTestTable :: [TestTable] -> Handler ()
 postTestTable ts = do

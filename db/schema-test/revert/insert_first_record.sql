@@ -2,6 +2,6 @@
 
 BEGIN;
 
-DELETE FROM test_table WHERE id = 1;
+DELETE FROM test_table WHERE id = 0;
 
 COMMIT;
