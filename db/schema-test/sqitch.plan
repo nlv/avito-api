@@ -4,3 +4,4 @@
 
 add_test_table 2021-08-04T04:55:10Z Leon Nikitin <nlvomsk@gmail.com> # Добавляем тестовую таблицу
 insert_first_record [add_test_table] 2021-08-04T05:48:37Z Leon Nikitin <nlvomsk@gmail.com> # Тестовая строка
+add_for_house 2021-09-13T13:21:22Z Leon Nikitin <nlvomsk@gmail.com> # Добавляем таблицу for_house

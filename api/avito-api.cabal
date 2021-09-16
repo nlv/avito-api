@@ -27,8 +27,9 @@ library
   exposed-modules:
       Api
       App
-      Base
-      Data
+      BaseAvito
+      DataForHouse
+      DataTestTable
   other-modules:
       Paths_avito_api
   hs-source-dirs:

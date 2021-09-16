@@ -5,17 +5,18 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 
 
-module Data (
+
+module DataTestTable (
   TestTable,
-  TestTableT(..),
-  TestTableId,
+  TestTableT(..)
+  -- ,
+  -- TestTableId(..)
   )  where
 
 import GHC.Generics
 import Data.Aeson
 import Data.Text
 import Data.Int
--- import GHC.Generics
 import Database.Beam
 
 data TestTableT f
@@ -34,7 +35,5 @@ deriving instance Eq TestTable
 
 instance ToJSON (TestTableT Identity)
 instance FromJSON (TestTableT Identity)
-
-type TestTableId = PrimaryKey TestTableT Identity
 
 

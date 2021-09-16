@@ -11,10 +11,11 @@ import Network.Wai.Middleware.Cors
 import Network.Wai.Middleware.Servant.Options
 import Servant
 import System.IO
-import Data
+import DataTestTable
+import DataForHouse
 import Data.Int
 import Api
-import qualified Base as B
+import qualified BaseAvito as B
 import Database.Beam.Postgres
 import qualified Database.PostgreSQL.Simple as Pg
 
@@ -39,9 +40,12 @@ mkApp = return $ cors (const $ Just policy) $ provideOptions api $ serve api ser
 
 server :: Server Api
 server =
-       getTestTableById
+       (getTestTableById
   :<|> getTestTable     
-  :<|> postTestTable
+  :<|> postTestTable) :<|> 
+       (getForHouseById
+  :<|> getForHouse     
+  :<|> postForHouse) 
 
 getTestTableById :: Int32 -> Handler TestTable
 getTestTableById id = do
@@ -67,5 +71,30 @@ postTestTable ts = do
     conn <- liftIO $ Pg.connectPostgreSQL "dbname=avito user=nlv password=1" 
     Pg.withTransaction conn $ runBeamPostgresDebug putStrLn conn $ B.replaceTestTableWith ts
     pure ()
+
+getForHouseById :: Int32 -> Handler ForHouse
+getForHouseById id = do
+  p' <- liftIO $ do
+    conn <- liftIO $ Pg.connectPostgreSQL "dbname=avito user=nlv password=1" 
+    runBeamPostgresDebug putStrLn conn (B.getForHouseById id)
+  -- pure p'
+  case p' of
+    Just p -> pure p
+    _      -> throwError err404
+
+getForHouse :: Handler [ForHouse]
+getForHouse = do
+  ps <- liftIO $ do
+    conn <- liftIO $ Pg.connectPostgreSQL "dbname=avito user=nlv password=1" 
+    runBeamPostgresDebug putStrLn conn (B.getForHouse)
+    -- runBeamPostgresDebug putStrLn conn (runSelectReturningList $ select $ all_ (B.avitoDb ^. B.testTable))
+  pure ps
+
+postForHouse :: [ForHouse] -> Handler ()
+postForHouse ts = do
+  liftIO $ do
+    conn <- liftIO $ Pg.connectPostgreSQL "dbname=avito user=nlv password=1" 
+    Pg.withTransaction conn $ runBeamPostgresDebug putStrLn conn $ B.replaceForHouseWith ts
+    pure ()    
 
 
