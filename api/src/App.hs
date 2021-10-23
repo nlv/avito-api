@@ -4,12 +4,14 @@ module App where
 
 import Database.Beam
 import Control.Monad.Trans.Except
+import Control.Monad
 import Data.Text
 import Network.Wai
 import Network.Wai.Handler.Warp
 import Network.Wai.Middleware.Cors
 import Network.Wai.Middleware.Servant.Options
 import Servant
+import Servant.Multipart
 import System.IO
 import DataTestTable
 import DataForHouse
@@ -18,6 +20,9 @@ import Api
 import qualified BaseAvito as B
 import Database.Beam.Postgres
 import qualified Database.PostgreSQL.Simple as Pg
+
+import Network.Minio
+import S3
 
 -- import Lens.Micro
 
@@ -45,7 +50,8 @@ server =
   :<|> postTestTable) :<|> 
        (getForHouseById
   :<|> getForHouse     
-  :<|> postForHouse) 
+  :<|> postForHouse
+  :<|> uploadForHouseFile) 
 
 getTestTableById :: Int32 -> Handler TestTable
 getTestTableById id = do
@@ -90,11 +96,29 @@ getForHouse = do
     -- runBeamPostgresDebug putStrLn conn (runSelectReturningList $ select $ all_ (B.avitoDb ^. B.testTable))
   pure ps
 
-postForHouse :: [ForHouse] -> Handler ()
+postForHouse :: [ForHouse] -> Handler [ForHouse]
 postForHouse ts = do
   liftIO $ do
     conn <- liftIO $ Pg.connectPostgreSQL "dbname=avito user=nlv password=1" 
     Pg.withTransaction conn $ runBeamPostgresDebug putStrLn conn $ B.replaceForHouseWith ts
-    pure ()    
+  getForHouse  
 
+uploadForHouseFile :: MultipartData Tmp -> Handler ()
+uploadForHouseFile multipartData = do
+  res <- liftIO $ do
+    guard $ Prelude.length (files multipartData) > 0
+    let file = Prelude.head $ files multipartData
+    runMinio s3ConnInfo $ do
+      makeBucketIfNotExists bucket
+      -- makeBucket bucket (Just "Омск")
+      fPutObject bucket (fdFileName file) (fdPayload file) defaultPutObjectOptions
+  case res of
+    Left err -> do
+      liftIO $ putStrLn (show err)
+      throwError err404
+    Right _ -> pure()
+
+  where bucket = "forhouse"
+        creds = Credentials { cAccessKey = "minioadmin", cSecretKey = "minioadmin"}
+        s3ConnInfo = setCreds creds $ setRegion "Omsk" "http://localhost:9000" 
 

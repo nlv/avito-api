@@ -52,6 +52,7 @@ avitoDb = defaultDbSettings `withDbModification`
     ,_forHouse = setEntityName "for_house" <>
                     modifyTableFields tableModification {
                       _forHouseId     = fieldNamed "id",
+                      _forHouseOid     = fieldNamed "oid",
                       _forHouseCategory   = fieldNamed "category",
                       _forHouseGoodsType   = fieldNamed "goods_type",
                       _forHouseTitle   = fieldNamed "title",
@@ -116,6 +117,7 @@ instance Beamable ForHouseT
 
 ForHouse
   (LensFor forHouseId)    
+  (LensFor forHouseOid)
   (LensFor forHouseCategory)
   (LensFor forHouseGoodsType)
   (LensFor forHouseTitle)

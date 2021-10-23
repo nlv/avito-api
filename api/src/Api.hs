@@ -7,6 +7,7 @@ module Api (
 
 import Data.Text
 import Servant
+import Servant.Multipart
 import DataTestTable
 import DataForHouse
 import Data.Int
@@ -26,7 +27,8 @@ type ForHouseApi = "for_house" :>
       (
            Capture "id" Int32 :> Get '[JSON] ForHouse
       :<|> Get '[JSON] [ForHouse]
-      :<|> ReqBody '[JSON] [ForHouse] :> Post '[JSON] ()
+      :<|> ReqBody '[JSON] [ForHouse] :> Post '[JSON] [ForHouse]
+      :<|> MultipartForm Tmp (MultipartData Tmp) :> Post '[JSON] ()
       )
 
 

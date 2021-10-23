@@ -20,6 +20,7 @@ import Database.Beam
 data ForHouseT f
   = ForHouse {
     _forHouseId     :: Columnar f Int32,
+    _forHouseOid   :: Columnar f Text,
     _forHouseCategory   :: Columnar f (Maybe Text),
     _forHouseGoodsType   :: Columnar f (Maybe Text),
     _forHouseTitle   :: Columnar f (Maybe Text),

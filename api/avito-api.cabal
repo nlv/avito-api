@@ -30,6 +30,7 @@ library
       BaseAvito
       DataForHouse
       DataTestTable
+      S3
   other-modules:
       Paths_avito_api
   hs-source-dirs:
@@ -40,8 +41,10 @@ library
     , beam-core
     , beam-postgres
     , microlens
+    , minio-hs
     , postgresql-simple
     , servant
+    , servant-multipart
     , servant-options
     , servant-server
     , text
@@ -63,8 +66,10 @@ executable avito-api-exe
     , beam-core
     , beam-postgres
     , microlens
+    , minio-hs
     , postgresql-simple
     , servant
+    , servant-multipart
     , servant-options
     , servant-server
     , text
@@ -89,8 +94,10 @@ test-suite avito-api-test
     , beam-core
     , beam-postgres
     , microlens
+    , minio-hs
     , postgresql-simple
     , servant
+    , servant-multipart
     , servant-options
     , servant-server
     , text

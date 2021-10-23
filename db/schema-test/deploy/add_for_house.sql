@@ -3,7 +3,8 @@
 BEGIN;
 
 CREATE TABLE for_house (
-      id            INT    PRIMARY KEY CHECK (id >= 0)
+      id            INT           PRIMARY KEY CHECK (id >= 0)
+    , oid           VARCHAR(50)   UNIQUE
     , category      TEXT
     , goods_type    TEXT
     , title         TEXT
