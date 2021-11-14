@@ -30,12 +30,12 @@ getFileUrls :: Text -> IO (Either MinioErr [Text])
 getFileUrls bucket = liftIO $ do
     runMinio s3ConnInfo $ do
       exists <- bucketExists bucket
-      liftIO $ guard exists
-      Conduit.runConduit $ listObjects bucket Nothing True .| ConduitL.mapM getObjectUrl .| ConduitL.catMaybes .| Conduit.sinkList
+      if exists
+        then Conduit.runConduit $ listObjects bucket Nothing True .| ConduitL.mapM getObjectUrl .| ConduitL.catMaybes .| Conduit.sinkList
+        else pure []
       -- Conduit.runConduit $ listObjects bucket Nothing True .| ConduitL.mapM getObjectUrl .| ConduitL.catMaybes .| Conduit.decodeUtf8 .| Conduit.sinkList
 
-  where bucket = "forhouse"
-        getObjectUrl :: ListItem -> Minio (Maybe Text)
+  where getObjectUrl :: ListItem -> Minio (Maybe Text)
         getObjectUrl (ListItemObject i) = fmap (Just . E.decodeUtf8) $ presignedGetObjectUrl bucket (oiObject i) (60*60) [] []
         -- getObjectUrl :: ListItem -> Minio (Maybe ByteString)
         -- getObjectUrl (ListItemObject i) = fmap Just $ presignedGetObjectUrl bucket (oiObject i) (60*60) [] []
