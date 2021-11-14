@@ -19,22 +19,22 @@ import Database.Beam
 
 data ForHouseT f
   = ForHouse {
-    _forHouseId     :: Columnar f Int32,
-    _forHouseOid   :: Columnar f Text,
-    _forHouseCategory   :: Columnar f (Maybe Text),
-    _forHouseGoodsType   :: Columnar f (Maybe Text),
-    _forHouseTitle   :: Columnar f (Maybe Text),
-    _forHouseDescription   :: Columnar f (Maybe Text),
-    _forHousePrice   :: Columnar f (Maybe Text),
-    _forHouseImageNames   :: Columnar f (Maybe Text),
-    _forHouseVideoUrl   :: Columnar f (Maybe Text),
-    _forHouseAddrRegion   :: Columnar f (Maybe Text),
-    -- _forHouseAddrArea   :: Columnar f (Maybe Text),
-    _forHouseAddrCity   :: Columnar f (Maybe Text),
-    _forHouseAddrPoint   :: Columnar f (Maybe Text),
-    _forHouseAddrStreet   :: Columnar f (Maybe Text),
-    _forHouseAddrHouse   :: Columnar f (Maybe Text),
-    _forHouseContactPhone   :: Columnar f (Maybe Text)
+    _forHouseIdT           :: Columnar f Int32,
+    _forHouseOidT          :: Columnar f Text,
+    _forHouseCategoryT     :: Columnar f (Maybe Text),
+    _forHouseGoodsTypeT    :: Columnar f (Maybe Text),
+    _forHouseTitleT        :: Columnar f (Maybe Text),
+    _forHouseDescriptionT  :: Columnar f (Maybe Text),
+    _forHousePriceT        :: Columnar f (Maybe Text),
+    -- _forHouseImageNamesT   :: Columnar f (Maybe Text),
+    _forHouseVideoUrlT     :: Columnar f (Maybe Text),
+    _forHouseAddrRegionT   :: Columnar f (Maybe Text),
+    -- _forHouseAddrAreaT  :: Columnar f (Maybe Text),
+    _forHouseAddrCityT     :: Columnar f (Maybe Text),
+    _forHouseAddrPointT    :: Columnar f (Maybe Text),
+    _forHouseAddrStreetT   :: Columnar f (Maybe Text),
+    _forHouseAddrHouseT    :: Columnar f (Maybe Text),
+    _forHouseContactPhoneT :: Columnar f (Maybe Text)
   }
   deriving Generic
 
@@ -49,5 +49,6 @@ instance ToJSON (ForHouseT Identity)
 instance FromJSON (ForHouseT Identity)
 
 type ForHouseId = PrimaryKey ForHouseT Identity
+
 
 

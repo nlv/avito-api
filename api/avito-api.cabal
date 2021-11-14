@@ -40,6 +40,8 @@ library
     , base
     , beam-core
     , beam-postgres
+    , bytestring
+    , conduit
     , microlens
     , minio-hs
     , postgresql-simple
@@ -65,6 +67,8 @@ executable avito-api-exe
     , base
     , beam-core
     , beam-postgres
+    , bytestring
+    , conduit
     , microlens
     , minio-hs
     , postgresql-simple
@@ -93,6 +97,8 @@ test-suite avito-api-test
     , base
     , beam-core
     , beam-postgres
+    , bytestring
+    , conduit
     , microlens
     , minio-hs
     , postgresql-simple

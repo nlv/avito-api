@@ -78,29 +78,44 @@ postTestTable ts = do
     Pg.withTransaction conn $ runBeamPostgresDebug putStrLn conn $ B.replaceTestTableWith ts
     pure ()
 
-getForHouseById :: Int32 -> Handler ForHouse
+getForHouseById :: Int32 -> Handler B.ForHouseA
 getForHouseById id = do
   p' <- liftIO $ do
     conn <- liftIO $ Pg.connectPostgreSQL "dbname=avito user=nlv password=1" 
     runBeamPostgresDebug putStrLn conn (B.getForHouseById id)
   -- pure p'
   case p' of
-    Just p -> pure p
+    Just p'' -> do
+      p''' <- liftIO $ B.forHouseToA p''
+      case p''' of
+        Left _ -> throwError err404
+        Right p -> pure p
     _      -> throwError err404
 
-getForHouse :: Handler [ForHouse]
+getForHouse :: Handler [B.ForHouseA]
 getForHouse = do
-  ps <- liftIO $ do
+  ps' <- liftIO $ do
     conn <- liftIO $ Pg.connectPostgreSQL "dbname=avito user=nlv password=1" 
     runBeamPostgresDebug putStrLn conn (B.getForHouse)
     -- runBeamPostgresDebug putStrLn conn (runSelectReturningList $ select $ all_ (B.avitoDb ^. B.testTable))
-  pure ps
+  a <- liftIO $ mapM B.forHouseToA ps'
+  let a' :: Either MinioErr [B.ForHouseA]
+      a' = sequence a
+  case a' of
+    Left e -> do
+      liftIO $ putStrLn "222222 "
+      liftIO $ putStrLn $ show e
+      throwError err404
+    Right ps -> do
+      liftIO $ putStrLn "111111 "
+      liftIO $ mapM_  (putStrLn . show) ps
+      pure ps
 
-postForHouse :: [ForHouse] -> Handler [ForHouse]
+postForHouse :: [B.ForHouseA] -> Handler [B.ForHouseA]
 postForHouse ts = do
   liftIO $ do
     conn <- liftIO $ Pg.connectPostgreSQL "dbname=avito user=nlv password=1" 
-    Pg.withTransaction conn $ runBeamPostgresDebug putStrLn conn $ B.replaceForHouseWith ts
+    Pg.withTransaction conn $ runBeamPostgresDebug putStrLn conn $ B.replaceForHouseWith (Prelude.map B.forHouseFromA ts)
   getForHouse  
 
 uploadForHouseFile :: MultipartData Tmp -> Handler ()

@@ -10,6 +10,7 @@ import Servant
 import Servant.Multipart
 import DataTestTable
 import DataForHouse
+import BaseAvito
 import Data.Int
 
 type Api = DataApi -- :<|> SingerApi
@@ -25,9 +26,9 @@ type TestTableApi = "test_table" :>
 
 type ForHouseApi = "for_house" :>
       (
-           Capture "id" Int32 :> Get '[JSON] ForHouse
-      :<|> Get '[JSON] [ForHouse]
-      :<|> ReqBody '[JSON] [ForHouse] :> Post '[JSON] [ForHouse]
+           Capture "id" Int32 :> Get '[JSON] ForHouseA
+      :<|> Get '[JSON] [ForHouseA]
+      :<|> ReqBody '[JSON] [ForHouseA] :> Post '[JSON] [ForHouseA]
       :<|> MultipartForm Tmp (MultipartData Tmp) :> Post '[JSON] ()
       )
 
