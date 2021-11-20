@@ -45,13 +45,14 @@ mkApp = return $ cors (const $ Just policy) $ provideOptions api $ serve api ser
 
 server :: Server Api
 server =
-       (getTestTableById
+       ((getTestTableById
   :<|> getTestTable     
   :<|> postTestTable) :<|> 
        (getForHouseById
   :<|> getForHouse     
   :<|> postForHouse
-  :<|> uploadForHouseFile) 
+       ))
+  :<|> uploadFile
 
 getTestTableById :: Int32 -> Handler TestTable
 getTestTableById id = do
@@ -118,8 +119,8 @@ postForHouse ts = do
     Pg.withTransaction conn $ runBeamPostgresDebug putStrLn conn $ B.replaceForHouseWith (Prelude.map B.forHouseFromA ts)
   getForHouse  
 
-uploadForHouseFile :: MultipartData Tmp -> Handler ()
-uploadForHouseFile multipartData = do
+uploadFile :: Text -> MultipartData Tmp -> Handler ()
+uploadFile bucket multipartData = do
   res <- liftIO $ do
     guard $ Prelude.length (files multipartData) > 0
     let file = Prelude.head $ files multipartData
@@ -133,7 +134,6 @@ uploadForHouseFile multipartData = do
       throwError err404
     Right _ -> pure()
 
-  where bucket = "forhouse"
-        creds = Credentials { cAccessKey = "minioadmin", cSecretKey = "minioadmin"}
+  where creds = Credentials { cAccessKey = "minioadmin", cSecretKey = "minioadmin"}
         s3ConnInfo = setCreds creds $ setRegion "Omsk" "http://localhost:9000" 
 

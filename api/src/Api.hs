@@ -13,7 +13,7 @@ import DataForHouse
 import BaseAvito
 import Data.Int
 
-type Api = DataApi -- :<|> SingerApi
+type Api = DataApi :<|> ImageApi
 
 type DataApi = "data" :> (TestTableApi :<|> ForHouseApi)
 
@@ -29,7 +29,10 @@ type ForHouseApi = "for_house" :>
            Capture "id" Int32 :> Get '[JSON] ForHouseA
       :<|> Get '[JSON] [ForHouseA]
       :<|> ReqBody '[JSON] [ForHouseA] :> Post '[JSON] [ForHouseA]
-      :<|> MultipartForm Tmp (MultipartData Tmp) :> Post '[JSON] ()
       )
+
+type ImageApi = "images" :> (
+           Capture "id" Text :> MultipartForm Tmp (MultipartData Tmp) :> Post '[JSON] ()
+      )      
 
 
