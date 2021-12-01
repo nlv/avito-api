@@ -164,7 +164,7 @@ data ForHouseA
     _forHouseTitle        :: Maybe Text,
     _forHouseDescription  :: Maybe Text,
     _forHousePrice        :: Maybe Text,
-    _forHouseImageUrl     :: [Text],
+    _forHouseImageUrl     :: [(Text, Text)],
     _forHouseVideoUrl     :: Maybe Text,
     _forHouseAddrRegion   :: Maybe Text,
     -- _forHouseAddrArea   :: Columnar f (Maybe Text),
@@ -183,7 +183,7 @@ forHouseToA :: ForHouseT Identity -> IO (Either MinioErr ForHouseA)
 forHouseToA h = do 
   urls <- getFileUrls (h ^. forHouseOid) 
   pure $ fmap (f h) urls
-  where f :: ForHouseT Identity -> [Text] -> ForHouseA
+  where f :: ForHouseT Identity -> [(Text, Text)] -> ForHouseA
         f h1 urls = 
           ForHouseA {
             _forHouseId           = h1 ^. forHouseId

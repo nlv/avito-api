@@ -42,6 +42,7 @@ library
     , beam-postgres
     , bytestring
     , conduit
+    , http-types
     , microlens
     , minio-hs
     , postgresql-simple
@@ -69,6 +70,7 @@ executable avito-api-exe
     , beam-postgres
     , bytestring
     , conduit
+    , http-types
     , microlens
     , minio-hs
     , postgresql-simple
@@ -99,6 +101,7 @@ test-suite avito-api-test
     , beam-postgres
     , bytestring
     , conduit
+    , http-types
     , microlens
     , minio-hs
     , postgresql-simple

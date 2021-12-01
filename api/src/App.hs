@@ -10,6 +10,7 @@ import Network.Wai
 import Network.Wai.Handler.Warp
 import Network.Wai.Middleware.Cors
 import Network.Wai.Middleware.Servant.Options
+import Network.HTTP.Types.Method
 import Servant
 import Servant.Multipart
 import System.IO
@@ -41,7 +42,7 @@ run = do
 mkApp :: IO Application
 mkApp = return $ cors (const $ Just policy) $ provideOptions api $ serve api server
   where
-    policy = simpleCorsResourcePolicy { corsRequestHeaders = [ "content-type" ] }
+    policy = simpleCorsResourcePolicy { corsRequestHeaders = [ "content-type" ], corsMethods = [methodGet, methodPost, methodDelete, methodOptions] }
 
 server :: Server Api
 server =
@@ -52,7 +53,7 @@ server =
   :<|> getForHouse     
   :<|> postForHouse
        ))
-  :<|> uploadFile
+  :<|> (uploadImage :<|> removeImage)
 
 getTestTableById :: Int32 -> Handler TestTable
 getTestTableById id = do
@@ -104,12 +105,8 @@ getForHouse = do
       a' = sequence a
   case a' of
     Left e -> do
-      liftIO $ putStrLn "222222 "
-      liftIO $ putStrLn $ show e
       throwError err404
     Right ps -> do
-      liftIO $ putStrLn "111111 "
-      liftIO $ mapM_  (putStrLn . show) ps
       pure ps
 
 postForHouse :: [B.ForHouseA] -> Handler [B.ForHouseA]
@@ -119,8 +116,8 @@ postForHouse ts = do
     Pg.withTransaction conn $ runBeamPostgresDebug putStrLn conn $ B.replaceForHouseWith (Prelude.map B.forHouseFromA ts)
   getForHouse  
 
-uploadFile :: Text -> MultipartData Tmp -> Handler ()
-uploadFile bucket multipartData = do
+uploadImage :: Text -> MultipartData Tmp -> Handler ()
+uploadImage bucket multipartData = do
   res <- liftIO $ do
     guard $ Prelude.length (files multipartData) > 0
     let file = Prelude.head $ files multipartData
@@ -137,3 +134,11 @@ uploadFile bucket multipartData = do
   where creds = Credentials { cAccessKey = "minioadmin", cSecretKey = "minioadmin"}
         s3ConnInfo = setCreds creds $ setRegion "Omsk" "http://localhost:9000" 
 
+removeImage :: Text -> Text -> Handler ()
+removeImage bucket name = do
+  res <- liftIO $ removeFile bucket name
+  case res of
+    Left err -> do
+      liftIO $ putStrLn (show err)
+      throwError err404
+    Right _ -> pure()      

@@ -38,6 +38,7 @@ dependencies:
 - wai
 # - wai-extra
 - wai-cors
+- http-types
 - warp
 
 

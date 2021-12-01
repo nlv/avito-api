@@ -31,8 +31,10 @@ type ForHouseApi = "for_house" :>
       :<|> ReqBody '[JSON] [ForHouseA] :> Post '[JSON] [ForHouseA]
       )
 
-type ImageApi = "images" :> (
-           Capture "id" Text :> MultipartForm Tmp (MultipartData Tmp) :> Post '[JSON] ()
-      )      
+type ImageApi = "images" :> 
+     (
+          Capture "id" Text :> MultipartForm Tmp (MultipartData Tmp) :> Post '[JSON] ()
+     :<|> Capture "id" Text :> Capture "image" Text :> Delete '[JSON] ()
+     )      
 
 

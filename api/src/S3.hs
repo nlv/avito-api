@@ -3,6 +3,7 @@
 module S3 (
   makeBucketIfNotExists  
 , getFileUrls  
+, removeFile
 )where
 
 import Control.Monad
@@ -26,7 +27,7 @@ makeBucketIfNotExists bucket = do
 
 
 
-getFileUrls :: Text -> IO (Either MinioErr [Text])
+getFileUrls :: Text -> IO (Either MinioErr [(Text, Text)])
 getFileUrls bucket = liftIO $ do
     runMinio s3ConnInfo $ do
       exists <- bucketExists bucket
@@ -35,11 +36,18 @@ getFileUrls bucket = liftIO $ do
         else pure []
       -- Conduit.runConduit $ listObjects bucket Nothing True .| ConduitL.mapM getObjectUrl .| ConduitL.catMaybes .| Conduit.decodeUtf8 .| Conduit.sinkList
 
-  where getObjectUrl :: ListItem -> Minio (Maybe Text)
-        getObjectUrl (ListItemObject i) = fmap (Just . E.decodeUtf8) $ presignedGetObjectUrl bucket (oiObject i) (60*60) [] []
+  where getObjectUrl :: ListItem -> Minio (Maybe (Text, Text))
+        getObjectUrl (ListItemObject i) = fmap (\u -> Just (oiObject i, E.decodeUtf8 u)) $ presignedGetObjectUrl bucket (oiObject i) (60*60) [] []
         -- getObjectUrl :: ListItem -> Minio (Maybe ByteString)
         -- getObjectUrl (ListItemObject i) = fmap Just $ presignedGetObjectUrl bucket (oiObject i) (60*60) [] []
         getObjectUrl _ = pure Nothing              
+
+removeFile :: Text -> Text -> IO (Either MinioErr ())
+removeFile bucket name = do
+  liftIO $ do
+    runMinio s3ConnInfo $ do
+      removeObject bucket name
+
 
 
 
