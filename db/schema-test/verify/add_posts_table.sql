@@ -1,4 +1,4 @@
--- Verify avito-schema-test:add_for_house on pg
+-- Verify avito-schema-test:add_posts on pg
 
 BEGIN;
 

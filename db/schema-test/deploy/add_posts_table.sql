@@ -1,4 +1,4 @@
--- Deploy avito-schema-test:add_for_house to pg
+-- Deploy avito-schema-test:add_posts to pg
 
 BEGIN;
 

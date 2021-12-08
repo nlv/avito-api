@@ -1,4 +1,4 @@
--- Revert avito-schema-test:add_for_house from pg
+-- Revert avito-schema-test:add_posts from pg
 
 BEGIN;
 

@@ -125,7 +125,7 @@ data PostA
     , _postImageUrl     :: [(Text, Text)]
     , _postVideoUrl     :: Maybe Text
     , _postAddrRegion   :: Maybe Text
-    -- _forHouseAddrArea   :: Columnar f (Maybe Text)
+    -- _postAddrArea   :: Columnar f (Maybe Text)
     , _postAddrCity     :: Maybe Text
     , _postAddrPoint    :: Maybe Text
     , _postAddrStreet   :: Maybe Text
