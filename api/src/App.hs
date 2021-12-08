@@ -14,8 +14,7 @@ import Network.HTTP.Types.Method
 import Servant
 import Servant.Multipart
 import System.IO
-import DataTestTable
-import DataForHouse
+import Post
 import Data.Int
 import Api
 import qualified BaseAvito as B
@@ -45,63 +44,31 @@ mkApp = return $ cors (const $ Just policy) $ provideOptions api $ serve api ser
     policy = simpleCorsResourcePolicy { corsRequestHeaders = [ "content-type" ], corsMethods = [methodGet, methodPost, methodDelete, methodOptions] }
 
 server :: Server Api
-server =
-       ((getTestTableById
-  :<|> getTestTable     
-  :<|> postTestTable) :<|> 
-       (getForHouseById
-  :<|> getForHouse     
-  :<|> postForHouse
-       ))
+server = (getPosts :<|> postPosts) 
+  :<|> (getPostById)
   :<|> (uploadImage :<|> removeImage)
 
-getTestTableById :: Int32 -> Handler TestTable
-getTestTableById id = do
+getPostById :: Int32 -> Handler B.PostA
+getPostById id = do
   p' <- liftIO $ do
     conn <- liftIO $ Pg.connectPostgreSQL "dbname=avito user=nlv password=1" 
-    runBeamPostgresDebug putStrLn conn (B.getTestTableById id)
-  -- pure p'
-  case p' of
-    Just p -> pure p
-    _      -> throwError err404
-
-getTestTable :: Handler [TestTable]
-getTestTable = do
-  ps <- liftIO $ do
-    conn <- liftIO $ Pg.connectPostgreSQL "dbname=avito user=nlv password=1" 
-    runBeamPostgresDebug putStrLn conn (B.getTestTable)
-    -- runBeamPostgresDebug putStrLn conn (runSelectReturningList $ select $ all_ (B.avitoDb ^. B.testTable))
-  pure ps
-
-postTestTable :: [TestTable] -> Handler ()
-postTestTable ts = do
-  liftIO $ do
-    conn <- liftIO $ Pg.connectPostgreSQL "dbname=avito user=nlv password=1" 
-    Pg.withTransaction conn $ runBeamPostgresDebug putStrLn conn $ B.replaceTestTableWith ts
-    pure ()
-
-getForHouseById :: Int32 -> Handler B.ForHouseA
-getForHouseById id = do
-  p' <- liftIO $ do
-    conn <- liftIO $ Pg.connectPostgreSQL "dbname=avito user=nlv password=1" 
-    runBeamPostgresDebug putStrLn conn (B.getForHouseById id)
+    runBeamPostgresDebug putStrLn conn (B.getPostById id)
   -- pure p'
   case p' of
     Just p'' -> do
-      p''' <- liftIO $ B.forHouseToA p''
+      p''' <- liftIO $ B.postToA p''
       case p''' of
         Left _ -> throwError err404
         Right p -> pure p
     _      -> throwError err404
 
-getForHouse :: Handler [B.ForHouseA]
-getForHouse = do
+getPosts :: Text -> Handler [B.PostA]
+getPosts tname = do
   ps' <- liftIO $ do
     conn <- liftIO $ Pg.connectPostgreSQL "dbname=avito user=nlv password=1" 
-    runBeamPostgresDebug putStrLn conn (B.getForHouse)
-    -- runBeamPostgresDebug putStrLn conn (runSelectReturningList $ select $ all_ (B.avitoDb ^. B.testTable))
-  a <- liftIO $ mapM B.forHouseToA ps'
-  let a' :: Either MinioErr [B.ForHouseA]
+    runBeamPostgresDebug putStrLn conn (B.getPosts tname)
+  a <- liftIO $ mapM B.postToA ps'
+  let a' :: Either MinioErr [B.PostA]
       a' = sequence a
   case a' of
     Left e -> do
@@ -109,12 +76,12 @@ getForHouse = do
     Right ps -> do
       pure ps
 
-postForHouse :: [B.ForHouseA] -> Handler [B.ForHouseA]
-postForHouse ts = do
+postPosts :: Text -> [B.PostA] -> Handler [B.PostA]
+postPosts tname ts = do
   liftIO $ do
     conn <- liftIO $ Pg.connectPostgreSQL "dbname=avito user=nlv password=1" 
-    Pg.withTransaction conn $ runBeamPostgresDebug putStrLn conn $ B.replaceForHouseWith (Prelude.map B.forHouseFromA ts)
-  getForHouse  
+    Pg.withTransaction conn $ runBeamPostgresDebug putStrLn conn $ B.replacePostsWith tname (Prelude.map (B.postFromA tname) ts)
+  getPosts tname
 
 uploadImage :: Text -> MultipartData Tmp -> Handler ()
 uploadImage bucket multipartData = do

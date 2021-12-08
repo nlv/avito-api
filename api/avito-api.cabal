@@ -28,8 +28,7 @@ library
       Api
       App
       BaseAvito
-      DataForHouse
-      DataTestTable
+      Post
       S3
   other-modules:
       Paths_avito_api

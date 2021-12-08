@@ -10,19 +10,14 @@
 module BaseAvito (
     AvitoDb(..)
   , avitoDb
-  , testTable
 
-  , getTestTableById
-  , getTestTable
-  , replaceTestTableWith  
-
-  , ForHouse(..)
-  , ForHouseA(..)
-  , getForHouseById
-  , getForHouse
-  , replaceForHouseWith  
-  , forHouseToA
-  , forHouseFromA
+  , Post(..)
+  , PostA(..)
+  , getPostById
+  , getPosts
+  , replacePostsWith  
+  , postToA
+  , postFromA
   )  where
 
 import GHC.Generics
@@ -35,14 +30,12 @@ import Data.Int
 import Data.Text
 import Data.Aeson
 import Lens.Micro
-import DataTestTable
-import DataForHouse
+import Post
 
 import S3
 
 data AvitoDb f = AvitoDb
-                      { _testTable :: f (TableEntity TestTableT) 
-                      , _forHouse  :: f (TableEntity ForHouseT) 
+                      { _posts :: f (TableEntity PostT) 
                       }
                         deriving Generic
 
@@ -51,173 +44,141 @@ instance Database be AvitoDb
 avitoDb :: DatabaseSettings be AvitoDb
 avitoDb = defaultDbSettings `withDbModification`
   dbModification {
-      _testTable = setEntityName "test_table" <>
+     _posts = setEntityName "posts" <>
                     modifyTableFields tableModification {
-                      _testTableId   = fieldNamed "id",
-                      _testTableCol1 = fieldNamed "col1",
-                      _testTableCol2 = fieldNamed "col2",
-                      _testTableCol3 = fieldNamed "col3"
-                    }
-    ,_forHouse = setEntityName "for_house" <>
-                    modifyTableFields tableModification {
-                      _forHouseIdT           = fieldNamed "id",
-                      _forHouseOidT          = fieldNamed "oid",
-                      _forHouseCategoryT     = fieldNamed "category",
-                      _forHouseGoodsTypeT    = fieldNamed "goods_type",
-                      _forHouseTitleT        = fieldNamed "title",
-                      _forHouseDescriptionT  = fieldNamed "description",
-                      _forHousePriceT        = fieldNamed "price",
-                      -- _forHouseImageNamesT   = fieldNamed "image_names",
-                      _forHouseVideoUrlT     = fieldNamed "video_url",
-                      _forHouseAddrRegionT   = fieldNamed "addr_region",
-                      -- _forHouseAddrAreaT  = fieldNamed "addr_area",
-                      _forHouseAddrCityT     = fieldNamed "addr_city",
-                      _forHouseAddrPointT    = fieldNamed "addr_point",
-                      _forHouseAddrStreetT   = fieldNamed "addr_street",
-                      _forHouseAddrHouseT    = fieldNamed "addr_house",
-                      _forHouseContactPhoneT = fieldNamed "contact_phone"
+                       _postIdT           = fieldNamed "id"
+                    ,  _postTnameT        = fieldNamed "tname"
+                    ,  _postOidT          = fieldNamed "oid"
+                    ,  _postCategoryT     = fieldNamed "category"
+                    ,  _postTitleT        = fieldNamed "title"
+                    ,  _postDescriptionT  = fieldNamed "description"
+                    ,  _postPriceT        = fieldNamed "price"
+                    ,  _postVideoUrlT     = fieldNamed "video_url"
+                    ,  _postAddrRegionT   = fieldNamed "addr_region"
+                      -- _postAddrAreaT  = fieldNamed "addr_area",
+                    ,  _postAddrCityT     = fieldNamed "addr_city"
+                    ,  _postAddrPointT    = fieldNamed "addr_point"
+                    ,  _postAddrStreetT   = fieldNamed "addr_street"
+                    ,  _postAddrHouseT    = fieldNamed "addr_house"
+                    ,  _postContactPhoneT = fieldNamed "contact_phone"
+                    ,  _postPostT         = fieldNamed "post"
                     }
   }
 
 AvitoDb 
-  (TableLens testTable)
-  (TableLens forHouse) = dbLenses   
+  (TableLens posts) = dbLenses   
 
-  
+instance Table PostT where
+  data PrimaryKey PostT f = PostId (Columnar f Int32) deriving Generic
+  primaryKey = PostId . _postIdT 
 
-instance Table TestTableT where
-  data PrimaryKey TestTableT f = TestTableId (Columnar f Int32) deriving Generic
-  primaryKey = TestTableId . _testTableId 
+type PostId = PrimaryKey PostT Identity
 
-type TestTableId = PrimaryKey TestTableT Identity
+instance Beamable (PrimaryKey PostT)
 
-instance Beamable (PrimaryKey TestTableT)
+instance Beamable PostT
 
-instance Beamable TestTableT
+Post
+  (LensFor postId)    
+  (LensFor postTname)
+  (LensFor postOid)
+  (LensFor postCategory)
+  (LensFor postTitle)
+  (LensFor postDescription)
+  (LensFor postPrice)
+  (LensFor postVideoUrl)
+  (LensFor postAddrRegion)
+  -- (LensFor postAddrArea)
+  (LensFor postAddrCity)
+  (LensFor postAddrPoint)
+  (LensFor postAddrStreet)
+  (LensFor postAddrHouse)
+  (LensFor postContactPhone) 
+  (LensFor postPost)
+  = tableLenses  
 
-TestTable
-  (LensFor testTableId)    
-  (LensFor testTableCol1)
-  (LensFor testTableCol2)
-  (LensFor testTableCol3) = tableLenses
-
-getTestTableById id = do
-  ps <- runSelectReturningList $ lookup_ (avitoDb ^. testTable) (TestTableId id)
+getPostById id = do
+  ps <- runSelectReturningList $ lookup_ (avitoDb ^. posts) (PostId id)
   pure $ if List.length ps > 0 then Just $ List.head ps else Nothing
 
-getTestTable :: Pg.Pg [TestTable]
-getTestTable = do
-  ps <- runSelectReturningList $ select $ all_ (avitoDb ^. testTable)  
-  pure ps
+getPosts :: Text -> Pg.Pg [Post]
+getPosts tname = do
+  ps <- runSelectReturningList $ select $ do
+    p <- all_ (avitoDb ^. posts)  
+    guard_ (p ^. postTname ==. val_ tname)
+    pure p
+  pure ps  
 
-replaceTestTableWith ts = do
-  runDelete $ Database.Beam.delete (avitoDb ^. testTable) (const $ val_ True)
-  runInsert $ Database.Beam.insert (avitoDb ^. testTable) (insertValues ts)
+-- TODO ts должен содержать tname
+replacePostsWith tname ts = do
+  runDelete $ Database.Beam.delete (avitoDb ^. posts) (\r -> r ^. postTname ==. val_ tname)
+  runInsert $ Database.Beam.insert (avitoDb ^. posts) (insertValues ts)
 
-instance Table ForHouseT where
-  data PrimaryKey ForHouseT f = ForHouseId (Columnar f Int32) deriving Generic
-  primaryKey = ForHouseId . _forHouseIdT 
-
-type ForHouseId = PrimaryKey ForHouseT Identity
-
-instance Beamable (PrimaryKey ForHouseT)
-
-instance Beamable ForHouseT
-
-ForHouse
-  (LensFor forHouseId)    
-  (LensFor forHouseOid)
-  (LensFor forHouseCategory)
-  (LensFor forHouseGoodsType)
-  (LensFor forHouseTitle)
-  (LensFor forHouseDescription)
-  (LensFor forHousePrice)
-  -- (LensFor forHouseImageNames)
-  (LensFor forHouseVideoUrl)
-  (LensFor forHouseAddrRegion)
-  -- (LensFor forHouseAddrArea)
-  (LensFor forHouseAddrCity)
-  (LensFor forHouseAddrPoint)
-  (LensFor forHouseAddrStreet)
-  (LensFor forHouseAddrHouse)
-  (LensFor forHouseContactPhone) = tableLenses  
-
-getForHouseById id = do
-  ps <- runSelectReturningList $ lookup_ (avitoDb ^. forHouse) (ForHouseId id)
-  pure $ if List.length ps > 0 then Just $ List.head ps else Nothing
-
-getForHouse :: Pg.Pg [ForHouse]
-getForHouse = do
-  ps <- runSelectReturningList $ select $ all_ (avitoDb ^. forHouse)  
-  pure ps
-
-replaceForHouseWith ts = do
-  runDelete $ Database.Beam.delete (avitoDb ^. forHouse) (const $ val_ True)
-  runInsert $ Database.Beam.insert (avitoDb ^. forHouse) (insertValues ts)
-
-data ForHouseA
-  = ForHouseA {
-    _forHouseId           :: Int32,
-    _forHouseOid          :: Text,
-    _forHouseCategory     :: Maybe Text,
-    _forHouseGoodsType    :: Maybe Text,
-    _forHouseTitle        :: Maybe Text,
-    _forHouseDescription  :: Maybe Text,
-    _forHousePrice        :: Maybe Text,
-    _forHouseImageUrl     :: [(Text, Text)],
-    _forHouseVideoUrl     :: Maybe Text,
-    _forHouseAddrRegion   :: Maybe Text,
-    -- _forHouseAddrArea   :: Columnar f (Maybe Text),
-    _forHouseAddrCity     :: Maybe Text,
-    _forHouseAddrPoint    :: Maybe Text,
-    _forHouseAddrStreet   :: Maybe Text,
-    _forHouseAddrHouse    :: Maybe Text,
-    _forHouseContactPhone :: Maybe Text
+data PostA
+  = PostA {
+      _postId           :: Int32
+    , _postOid          :: Text
+    , _postCategory     :: Maybe Text
+    , _postTitle        :: Maybe Text
+    , _postDescription  :: Maybe Text
+    , _postPrice        :: Maybe Text
+    , _postImageUrl     :: [(Text, Text)]
+    , _postVideoUrl     :: Maybe Text
+    , _postAddrRegion   :: Maybe Text
+    -- _forHouseAddrArea   :: Columnar f (Maybe Text)
+    , _postAddrCity     :: Maybe Text
+    , _postAddrPoint    :: Maybe Text
+    , _postAddrStreet   :: Maybe Text
+    , _postAddrHouse    :: Maybe Text
+    , _postContactPhone :: Maybe Text
+    , _postPost         :: Value
   } 
   deriving (Generic, Show)
 
-instance ToJSON (ForHouseA)
-instance FromJSON (ForHouseA)
+instance ToJSON (PostA)
+instance FromJSON (PostA)
 
-forHouseToA :: ForHouseT Identity -> IO (Either MinioErr ForHouseA)
-forHouseToA h = do 
-  urls <- getFileUrls (h ^. forHouseOid) 
+postToA :: PostT Identity -> IO (Either MinioErr PostA)
+postToA h = do 
+  urls <- getFileUrls (h ^. postOid) 
   pure $ fmap (f h) urls
-  where f :: ForHouseT Identity -> [(Text, Text)] -> ForHouseA
+  where f :: PostT Identity -> [(Text, Text)] -> PostA
         f h1 urls = 
-          ForHouseA {
-            _forHouseId           = h1 ^. forHouseId
-          , _forHouseOid          = h1 ^. forHouseOid
-          , _forHouseCategory     = h1 ^. forHouseCategory
-          , _forHouseGoodsType    = h1 ^. forHouseGoodsType
-          , _forHouseTitle        = h1 ^. forHouseTitle
-          , _forHouseDescription  = h1 ^. forHouseDescription
-          , _forHousePrice        = h1 ^. forHousePrice
-          , _forHouseImageUrl     = urls
-          , _forHouseVideoUrl     = h1 ^. forHouseVideoUrl
-          , _forHouseAddrRegion   = h1 ^. forHouseAddrRegion
-           -- _forHouseAddrArea  f (Maybe Text),
-          , _forHouseAddrCity     = h1 ^. forHouseAddrCity
-          , _forHouseAddrPoint    = h1 ^. forHouseAddrPoint
-          , _forHouseAddrStreet   = h1 ^. forHouseAddrStreet
-          , _forHouseAddrHouse    = h1 ^. forHouseAddrHouse
-          , _forHouseContactPhone = h1 ^. forHouseContactPhone
+          PostA {
+            _postId           = h1 ^. postId
+          , _postOid          = h1 ^. postOid
+          , _postCategory     = h1 ^. postCategory
+          , _postTitle        = h1 ^. postTitle
+          , _postDescription  = h1 ^. postDescription
+          , _postPrice        = h1 ^. postPrice
+          , _postImageUrl     = urls
+          , _postVideoUrl     = h1 ^. postVideoUrl
+          , _postAddrRegion   = h1 ^. postAddrRegion
+           -- _postAddrArea  f (Maybe Text),
+          , _postAddrCity     = h1 ^. postAddrCity
+          , _postAddrPoint    = h1 ^. postAddrPoint
+          , _postAddrStreet   = h1 ^. postAddrStreet
+          , _postAddrHouse    = h1 ^. postAddrHouse
+          , _postContactPhone = h1 ^. postContactPhone
+          , _postPost         = post
           }
+          where Pg.PgJSONB post =  (h1 ^. postPost) 
 
-forHouseFromA :: ForHouseA -> ForHouse
-forHouseFromA a = ForHouse {
-      _forHouseIdT           = _forHouseId a
-    , _forHouseOidT          = _forHouseOid a
-    , _forHouseCategoryT     = _forHouseCategory  a
-    , _forHouseGoodsTypeT    = _forHouseGoodsType a
-    , _forHouseTitleT        = _forHouseTitle a
-    , _forHouseDescriptionT  = _forHouseDescription a
-    , _forHousePriceT        = _forHousePrice a
-    , _forHouseVideoUrlT     = _forHouseVideoUrl a
-    , _forHouseAddrRegionT   = _forHouseAddrRegion a
-    , _forHouseAddrCityT     = _forHouseAddrCity a
-    , _forHouseAddrPointT    = _forHouseAddrPoint a
-    , _forHouseAddrStreetT   = _forHouseAddrStreet a
-    , _forHouseAddrHouseT    = _forHouseAddrHouse a
-    , _forHouseContactPhoneT = _forHouseContactPhone a
+postFromA :: Text -> PostA -> Post
+postFromA tname a = Post {
+      _postIdT           = _postId a
+    , _postTnameT        = tname
+    , _postOidT          = _postOid a
+    , _postCategoryT     = _postCategory  a
+    , _postTitleT        = _postTitle a
+    , _postDescriptionT  = _postDescription a
+    , _postPriceT        = _postPrice a
+    , _postVideoUrlT     = _postVideoUrl a
+    , _postAddrRegionT   = _postAddrRegion a
+    , _postAddrCityT     = _postAddrCity a
+    , _postAddrPointT    = _postAddrPoint a
+    , _postAddrStreetT   = _postAddrStreet a
+    , _postAddrHouseT    = _postAddrHouse a
+    , _postContactPhoneT = _postContactPhone a
+    , _postPostT         = Pg.PgJSONB $ _postPost a
 }

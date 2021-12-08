@@ -2,6 +2,6 @@
 
 BEGIN;
 
-DROP TABLE for_house;
+DROP TABLE posts;
 
 COMMIT;

@@ -2,15 +2,14 @@
 
 BEGIN;
 
-CREATE TABLE for_house (
+CREATE TABLE posts (
       id            INT           PRIMARY KEY CHECK (id >= 0)
     , oid           VARCHAR(50)   UNIQUE
+    , tname         TEXT
     , category      TEXT
-    , goods_type    TEXT
     , title         TEXT
     , description   TEXT
     , price         TEXT
-    , image_names   TEXT
     , video_url     TEXT
     , addr_region   TEXT 
     -- , addr_area     TEXT
@@ -19,6 +18,7 @@ CREATE TABLE for_house (
     , addr_street   TEXT
     , addr_house    TEXT
     , contact_phone TEXT
+    , post          JSONB
 );
 
 COMMIT;

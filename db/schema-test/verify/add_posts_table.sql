@@ -2,6 +2,6 @@
 
 BEGIN;
 
-SELECT id FROM for_house WHERE FALSE;
+SELECT id FROM posts WHERE FALSE;
 
 ROLLBACK;
