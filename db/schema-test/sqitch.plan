@@ -3,3 +3,10 @@
 %uri=https://bitbucket.org/nlvomsk/avito-schema-test/
 
 add_posts_table 2021-12-07T08:00:00Z Leon Nikitin <nlvomsk@gmail.com> # Добавляем таблицу posts
+add_opts_table 2021-12-08T06:13:28Z Leon Nikitin <nlvomsk@gmail.com> # Добавляем таблицу opts
+add_opts_vals_table [add_opts_table] 2021-12-09T06:07:40Z Leon Nikitin <nlvomsk@gmail.com> # Добавляем таблицу opts_vals
+add_tnames_table 2021-12-08T06:01:33Z Leon Nikitin <nlvomsk@gmail.com> # Добавление таблицы tnames
+add_tnames_fields_table [add_tnames_table add_opts_table] 2021-12-09T05:46:53Z Leon Nikitin <nlvomsk@gmail.com> # Добавляем таблицу tnames_fields
+insert_goods_types_opts [add_opts_vals_table] 2021-12-10T05:49:11Z Leon Nikitin <nlvomsk@gmail.com> # Добавляем опции для колонки goods_types
+add_for_house_tname [add_tnames_table insert_goods_types_opts] 2021-12-08T06:11:21Z Leon Nikitin <nlvomsk@gmail.com> # Добавляем раздел for_house в таблицу tnames
+
