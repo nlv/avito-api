@@ -2,6 +2,6 @@
 
 BEGIN;
 
-SELECT 1/COUNT(*) FROM tnames_fields WHERE tname = 'for_house' AND name IN ('_postGoodsType');
+SELECT 1/COUNT(*) FROM tfields WHERE tname = 'for_house' AND name IN ('_postGoodsType');
 
 ROLLBACK;

@@ -6,7 +6,7 @@ BEGIN;
 INSERT INTO tnames (tname, label)
 VALUES ('for_house', 'Для дома и дачи');
 
-INSERT INTO tnames_fields (tname, name, label, ftype, optname)
+INSERT INTO tfields (tname, name, label, ftype, optname)
 VALUES ('for_house', '_postGoodsType', 'Вид товара', 'enum', 'goods_types');
 
 COMMIT;

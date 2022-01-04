@@ -11,6 +11,9 @@ module BaseAvito (
     AvitoDb(..)
   , avitoDb
 
+  ,MetaA(..)
+  ,getMeta
+
   , Post(..)
   , PostA(..)
   , getPostById
@@ -30,12 +33,17 @@ import Data.Int
 import Data.Text
 import Data.Aeson
 import Lens.Micro
+
+import Meta
 import Post
 
 import S3
 
 data AvitoDb f = AvitoDb
-                      { _posts :: f (TableEntity PostT) 
+                      { _posts   :: f (TableEntity PostT) 
+                      , _tnames  :: f (TableEntity TNameT)
+                      ,_tfields  :: f (TableEntity TFieldT)
+                      ,_optsvals :: f (TableEntity OptsValT)
                       }
                         deriving Generic
 
@@ -44,7 +52,29 @@ instance Database be AvitoDb
 avitoDb :: DatabaseSettings be AvitoDb
 avitoDb = defaultDbSettings `withDbModification`
   dbModification {
-     _posts = setEntityName "posts" <>
+     _tnames = setEntityName "tnames" <>
+                    modifyTableFields tableModification {
+                       _tnameIdT           = fieldNamed "id"
+                    ,  _tnameTnameT        = fieldNamed "tname"
+                    ,  _tnameLabelT        = fieldNamed "label"  
+                    }
+    ,_tfields = setEntityName "tfields" <>
+                    modifyTableFields tableModification {
+                       _tfieldIdT          = fieldNamed "id"
+                    ,  _tfieldTnameT       = fieldNamed "tname"
+                    ,  _tfieldNameT        = fieldNamed "name"
+                    ,  _tfieldLabelT       = fieldNamed "label"  
+                    ,  _tfieldTypeT        = fieldNamed "ftype"
+                    ,  _tfieldOptnameT     = fieldNamed "optname"
+                    }                    
+    ,_optsvals = setEntityName "opts_vals" <>
+                    modifyTableFields tableModification {
+                       _optsValIdT         = fieldNamed "id"
+                    ,  _optsValOptnameT    = fieldNamed "optname"
+                    ,  _optsValLabelT      = fieldNamed "label"  
+                    ,  _optsValValT        = fieldNamed "val"
+                    }
+    ,_posts = setEntityName "posts" <>
                     modifyTableFields tableModification {
                        _postIdT           = fieldNamed "id"
                     ,  _postTnameT        = fieldNamed "tname"
@@ -66,7 +96,89 @@ avitoDb = defaultDbSettings `withDbModification`
   }
 
 AvitoDb 
-  (TableLens posts) = dbLenses   
+  (TableLens posts) 
+  (TableLens tnames) 
+  (TableLens tfields) 
+  (TableLens optsvals)
+  = dbLenses   
+
+instance Table TNameT where
+  data PrimaryKey TNameT f = TNameId (Columnar f Int32) deriving Generic
+  primaryKey = TNameId . _tnameIdT 
+
+type TNameId = PrimaryKey TNameT Identity
+
+instance Beamable (PrimaryKey TNameT)
+
+instance Beamable TNameT
+
+TName
+  (LensFor tnameId)    
+  (LensFor tnameTname)
+  (LensFor tnameLabel)
+  = tableLenses  
+
+instance Table TFieldT where
+  data PrimaryKey TFieldT f = TFieldId (Columnar f Int32) deriving Generic
+  primaryKey = TFieldId . _tfieldIdT 
+
+type TFieldId = PrimaryKey TFieldT Identity
+
+instance Beamable (PrimaryKey TFieldT)
+
+instance Beamable TFieldT
+
+TField
+  (LensFor tfieldId)    
+  (LensFor tfieldTName)
+  (LensFor tfieldName)
+  (LensFor tfieldLabel)
+  (LensFor tfieldType)
+  (LensFor tfieldOptname)
+  = tableLenses  
+
+instance Table OptsValT where
+  data PrimaryKey OptsValT f = OptsValId (Columnar f Int32) deriving Generic
+  primaryKey = OptsValId . _optsValIdT 
+
+type OptsValId = PrimaryKey OptsValT Identity
+
+instance Beamable (PrimaryKey OptsValT)
+
+instance Beamable OptsValT
+
+OptsVal
+  (LensFor optsValId)    
+  (LensFor optsValOptname)
+  (LensFor optsValLabel)
+  (LensFor optsValVal)
+  = tableLenses  
+
+
+data MetaFieldType = TextFieldType | NumberFieldType | EnumFieldType [(Text, Text)] deriving Generic
+
+instance ToJSON (MetaFieldType)
+instance FromJSON (MetaFieldType)  
+
+data MetaField 
+  = MetaField {
+    _mfName :: Text
+  , _mfLabel :: Text    
+  , _mfType :: MetaFieldType  
+  } deriving Generic
+
+instance ToJSON (MetaField)
+instance FromJSON (MetaField)    
+
+data MetaA
+  = MetaA {
+      _metaName        :: Text
+    , _metaLabel       :: Text
+    , _metaFields      :: [MetaField]
+  } deriving Generic
+
+instance ToJSON (MetaA)
+instance FromJSON (MetaA)  
 
 instance Table PostT where
   data PrimaryKey PostT f = PostId (Columnar f Int32) deriving Generic
@@ -182,3 +294,32 @@ postFromA tname a = Post {
     , _postContactPhoneT = _postContactPhone a
     , _postPostT         = Pg.PgJSONB $ _postPost a
 }
+
+getMeta :: Pg.Pg [MetaA]
+getMeta = do
+  ps <- runSelectReturningList $ select $ all_ (avitoDb ^. tnames) 
+  opts' <- runSelectReturningList $ select $ all_ (avitoDb ^. optsvals) 
+  let opts'' = List.groupBy (\a b -> a ^. optsValOptname == b ^. optsValOptname) opts'
+      opts = List.map (\a -> ((List.head a) ^. optsValOptname, List.map (\b -> (b ^. optsValLabel, b ^. optsValVal)) a)) opts''
+  fields' <- runSelectReturningList $ select $ all_ (avitoDb ^. tfields) 
+  let toMetaField f = 
+        MetaField { 
+                    _mfName = f ^. tfieldName
+                  , _mfLabel = f ^. tfieldLabel 
+                  -- , _mfType = case f ^. tfieldType of
+                  --               "text" -> TextFieldType
+                  --               "number" -> NumberFieldType
+                  --               "enum" -> EnumFieldType $ maybe [] id $ do
+                  --                           optname <- f ^. tfieldOptname
+                  --                           List.lookup optname opts
+                  , _mfType = case f ^. tfieldType of
+                                "text" -> TextFieldType
+                                "number" -> NumberFieldType
+                                "enum" -> maybe TextFieldType id $ do
+                                            optname <- f ^. tfieldOptname
+                                            fmap EnumFieldType $ List.lookup optname opts                  
+                                _ -> TextFieldType
+                  }
+      fields = List.map (\f -> (f ^. tfieldTName, toMetaField f)) fields'
+  pure $ fmap (\p -> MetaA { _metaName = p ^. tnameTname, _metaLabel = p ^. tnameLabel, _metaFields = List.map snd $ List.filter (\f -> fst f == p ^. tnameTname) fields}) ps  
+  

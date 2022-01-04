@@ -44,7 +44,8 @@ mkApp = return $ cors (const $ Just policy) $ provideOptions api $ serve api ser
     policy = simpleCorsResourcePolicy { corsRequestHeaders = [ "content-type" ], corsMethods = [methodGet, methodPost, methodDelete, methodOptions] }
 
 server :: Server Api
-server = (getPosts :<|> postPosts) 
+server = getMeta
+  :<|> (getPosts :<|> postPosts) 
   :<|> (getPostById)
   :<|> (uploadImage :<|> removeImage)
 
@@ -109,3 +110,9 @@ removeImage bucket name = do
       liftIO $ putStrLn (show err)
       throwError err404
     Right _ -> pure()      
+
+getMeta :: Handler [B.MetaA]
+getMeta = 
+  liftIO $ do
+    conn <- liftIO $ Pg.connectPostgreSQL "dbname=avito user=nlv password=1" 
+    runBeamPostgresDebug putStrLn conn (B.getMeta)

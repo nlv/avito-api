@@ -28,6 +28,7 @@ library
       Api
       App
       BaseAvito
+      Meta
       Post
       S3
   other-modules:

@@ -12,7 +12,12 @@ import Post
 import BaseAvito
 import Data.Int
 
-type Api = DataApi :<|> RowApi :<|> ImageApi
+type Api = MetaApi :<|> DataApi :<|> RowApi :<|> ImageApi
+
+type MetaApi = 
+     "meta" :> (
+          Get '[JSON] [MetaA]
+     )
 
 type DataApi = 
      "data" :> (

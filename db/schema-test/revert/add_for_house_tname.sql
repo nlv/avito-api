@@ -2,7 +2,7 @@
 
 BEGIN;
 
-DELETE FROM tnames_fields WHERE tname = 'for_house' AND name IN ('_postGoodsType');
+DELETE FROM tfields WHERE tname = 'for_house' AND name IN ('_postGoodsType');
 
 DELETE FROM tnames WHERE tname = 'for_house';
 

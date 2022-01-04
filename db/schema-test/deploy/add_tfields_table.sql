@@ -1,9 +1,9 @@
--- Deploy avito-schema-test:add_tnames_fields_table to pg
+-- Deploy avito-schema-test:add_tfields_table to pg
 -- requires: add_tnames_table
 
 BEGIN;
 
-CREATE TABLE tnames_fields (
+CREATE TABLE tfields (
       id            BIGSERIAL     PRIMARY KEY 
     , tname         TEXT          NOT NULL REFERENCES tnames (tname)
     , name          TEXT          NOT NULL  
