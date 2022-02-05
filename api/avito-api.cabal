@@ -38,6 +38,7 @@ library
   build-depends:
       aeson
     , base
+    , base64
     , beam-core
     , beam-postgres
     , bytestring
@@ -66,6 +67,7 @@ executable avito-api-exe
       aeson
     , avito-api
     , base
+    , base64
     , beam-core
     , beam-postgres
     , bytestring
@@ -97,6 +99,7 @@ test-suite avito-api-test
       aeson
     , avito-api
     , base
+    , base64
     , beam-core
     , beam-postgres
     , bytestring

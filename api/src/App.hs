@@ -6,6 +6,7 @@ import Database.Beam
 import Control.Monad.Trans.Except
 import Control.Monad
 import Data.Text
+import qualified Data.Text.Encoding.Base64 as B64
 import Network.Wai
 import Network.Wai.Handler.Warp
 import Network.Wai.Middleware.Cors
@@ -92,10 +93,13 @@ uploadImage bucket multipartData = do
     runMinio s3ConnInfo $ do
       makeBucketIfNotExists bucket
       -- makeBucket bucket (Just "Омск")
-      fPutObject bucket (fdFileName file) (fdPayload file) defaultPutObjectOptions
+      fPutObject bucket (B64.encodeBase64 $ fdFileName file) (fdPayload file) defaultPutObjectOptions
   case res of
     Left err -> do
+      liftIO $ putStrLn "----------------"
+      liftIO $ putStrLn "MINIO UPLOAD ERROR START"
       liftIO $ putStrLn (show err)
+      liftIO $ putStrLn "----------------"
       throwError err404
     Right _ -> pure()
 
