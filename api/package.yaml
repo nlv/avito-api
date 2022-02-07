@@ -41,6 +41,7 @@ dependencies:
 - wai-cors
 - http-types
 - warp
+- optparse-applicative
 
 
 library:
