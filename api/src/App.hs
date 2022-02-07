@@ -6,6 +6,8 @@ import Database.Beam
 import Control.Monad.Trans.Except
 import Control.Monad
 import Data.Text
+import Data.String
+import qualified Data.ByteString.Char8 as BS
 import qualified Data.Text.Encoding.Base64 as B64
 import Network.Wai
 import Network.Wai.Handler.Warp
@@ -27,33 +29,48 @@ import S3
 
 -- import Lens.Micro
 
+
+data Options = Options {
+    optPort        :: Int
+  , optDbName      :: String
+  , optDbUser      :: String
+  , optDbPassword  :: String
+  , optS3Url       :: String
+  , optS3User      :: String
+  , optS3SecretKey :: String 
+  , optS3Region    :: String
+  }
+
 api :: Proxy Api
 api = Proxy
 
-run :: IO ()
-run = do
-  let port = 3030
+run :: Options -> IO ()
+run opts = do
+  let port = optPort opts
       settings =
         setPort port $
         setBeforeMainLoop (hPutStrLn stderr ("listening on port " ++ show port)) $
         defaultSettings
-  runSettings settings =<< mkApp
+  runSettings settings =<< mkApp opts
 
-mkApp :: IO Application
-mkApp = return $ cors (const $ Just policy) $ provideOptions api $ serve api server
+mkApp :: Options -> IO Application
+mkApp opts = return $ cors (const $ Just policy) $ provideOptions api $ serve api (server opts)
   where
     policy = simpleCorsResourcePolicy { corsRequestHeaders = [ "content-type" ], corsMethods = [methodGet, methodPost, methodDelete, methodOptions] }
 
-server :: Server Api
-server = getMeta
-  :<|> (getPosts :<|> postPosts) 
-  :<|> (getPostById)
-  :<|> (uploadImage :<|> removeImage)
+dbConnectString :: Options -> BS.ByteString
+dbConnectString opts = BS.pack $ "dbname=" ++ optDbName opts ++ " user=" ++ optDbUser opts ++ " password=" ++ optDbPassword opts 
 
-getPostById :: Int32 -> Handler B.PostA
-getPostById id = do
+server :: Options -> Server Api
+server opts = getMeta opts
+  :<|> (getPosts opts :<|> postPosts opts) 
+  :<|> (getPostById opts)
+  :<|> (uploadImage opts :<|> removeImage)
+
+getPostById :: Options -> Int32 -> Handler B.PostA
+getPostById opts id = do
   p' <- liftIO $ do
-    conn <- liftIO $ Pg.connectPostgreSQL "dbname=avito user=nlv password=1" 
+    conn <- liftIO $ Pg.connectPostgreSQL $ dbConnectString opts
     runBeamPostgresDebug putStrLn conn (B.getPostById id)
   -- pure p'
   case p' of
@@ -64,10 +81,10 @@ getPostById id = do
         Right p -> pure p
     _      -> throwError err404
 
-getPosts :: Text -> Handler [B.PostA]
-getPosts tname = do
+getPosts :: Options -> Text -> Handler [B.PostA]
+getPosts opts tname = do
   ps' <- liftIO $ do
-    conn <- liftIO $ Pg.connectPostgreSQL "dbname=avito user=nlv password=1" 
+    conn <- liftIO $ Pg.connectPostgreSQL $ dbConnectString opts
     runBeamPostgresDebug putStrLn conn (B.getPosts tname)
   a <- liftIO $ mapM B.postToA ps'
   let a' :: Either MinioErr [B.PostA]
@@ -78,15 +95,15 @@ getPosts tname = do
     Right ps -> do
       pure ps
 
-postPosts :: Text -> [B.PostA] -> Handler [B.PostA]
-postPosts tname ts = do
+postPosts :: Options -> Text -> [B.PostA] -> Handler [B.PostA]
+postPosts opts tname ts = do
   liftIO $ do
-    conn <- liftIO $ Pg.connectPostgreSQL "dbname=avito user=nlv password=1" 
+    conn <- liftIO $ Pg.connectPostgreSQL $ dbConnectString opts
     Pg.withTransaction conn $ runBeamPostgresDebug putStrLn conn $ B.replacePostsWith tname (Prelude.map (B.postFromA tname) ts)
-  getPosts tname
+  getPosts opts tname
 
-uploadImage :: Text -> MultipartData Tmp -> Handler ()
-uploadImage bucket multipartData = do
+uploadImage :: Options -> Text -> MultipartData Tmp -> Handler ()
+uploadImage opts bucket multipartData = do
   res <- liftIO $ do
     guard $ Prelude.length (files multipartData) > 0
     let file = Prelude.head $ files multipartData
@@ -103,8 +120,8 @@ uploadImage bucket multipartData = do
       throwError err404
     Right _ -> pure()
 
-  where creds = Credentials { cAccessKey = "minioadmin", cSecretKey = "minioadmin"}
-        s3ConnInfo = setCreds creds $ setRegion "Omsk" "http://localhost:9000" 
+  where creds = Credentials { cAccessKey = pack $ optS3User opts, cSecretKey = pack $ optS3SecretKey opts}
+        s3ConnInfo = setCreds creds $ setRegion (pack $ optS3Region opts) (fromString $ optS3Url opts)
 
 removeImage :: Text -> Text -> Handler ()
 removeImage bucket name = do
@@ -115,8 +132,8 @@ removeImage bucket name = do
       throwError err404
     Right _ -> pure()      
 
-getMeta :: Handler [B.MetaA]
-getMeta = 
+getMeta :: Options ->  Handler [B.MetaA]
+getMeta opts = 
   liftIO $ do
-    conn <- liftIO $ Pg.connectPostgreSQL "dbname=avito user=nlv password=1" 
+    conn <- liftIO $ Pg.connectPostgreSQL $ dbConnectString opts
     runBeamPostgresDebug putStrLn conn (B.getMeta)

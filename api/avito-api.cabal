@@ -46,6 +46,7 @@ library
     , http-types
     , microlens
     , minio-hs
+    , optparse-applicative
     , postgresql-simple
     , servant
     , servant-multipart
@@ -75,6 +76,7 @@ executable avito-api-exe
     , http-types
     , microlens
     , minio-hs
+    , optparse-applicative
     , postgresql-simple
     , servant
     , servant-multipart
@@ -107,6 +109,7 @@ test-suite avito-api-test
     , http-types
     , microlens
     , minio-hs
+    , optparse-applicative
     , postgresql-simple
     , servant
     , servant-multipart
