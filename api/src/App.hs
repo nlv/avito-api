@@ -65,7 +65,7 @@ server :: Options -> Server Api
 server opts = getMeta opts
   :<|> (getPosts opts :<|> postPosts opts) 
   :<|> (getPostById opts)
-  :<|> (uploadImage opts :<|> removeImage)
+  :<|> (uploadImage opts :<|> removeImage opts)
 
 getPostById :: Options -> Int32 -> Handler B.PostA
 getPostById opts id = do
@@ -75,7 +75,7 @@ getPostById opts id = do
   -- pure p'
   case p' of
     Just p'' -> do
-      p''' <- liftIO $ B.postToA p''
+      p''' <- liftIO $ B.postToA (s3ConnInfo opts) p''
       case p''' of
         Left _ -> throwError err404
         Right p -> pure p
@@ -86,7 +86,7 @@ getPosts opts tname = do
   ps' <- liftIO $ do
     conn <- liftIO $ Pg.connectPostgreSQL $ dbConnectString opts
     runBeamPostgresDebug putStrLn conn (B.getPosts tname)
-  a <- liftIO $ mapM B.postToA ps'
+  a <- liftIO $ mapM (B.postToA $ s3ConnInfo opts) ps'
   let a' :: Either MinioErr [B.PostA]
       a' = sequence a
   case a' of
@@ -107,8 +107,8 @@ uploadImage opts bucket multipartData = do
   res <- liftIO $ do
     guard $ Prelude.length (files multipartData) > 0
     let file = Prelude.head $ files multipartData
-    runMinio s3ConnInfo $ do
-      makeBucketIfNotExists bucket
+    runMinio (s3ConnInfo opts) $ do
+      makeBucketIfNotExists (pack $ optS3Region opts) bucket
       -- makeBucket bucket (Just "Омск")
       fPutObject bucket (B64.encodeBase64 $ fdFileName file) (fdPayload file) defaultPutObjectOptions
   case res of
@@ -120,12 +120,12 @@ uploadImage opts bucket multipartData = do
       throwError err404
     Right _ -> pure()
 
-  where creds = Credentials { cAccessKey = pack $ optS3User opts, cSecretKey = pack $ optS3SecretKey opts}
-        s3ConnInfo = setCreds creds $ setRegion (pack $ optS3Region opts) (fromString $ optS3Url opts)
+s3ConnInfo opts = setCreds creds $ setRegion (pack $ optS3Region opts) (fromString $ optS3Url opts)
+   where creds = Credentials { cAccessKey = pack $ optS3User opts, cSecretKey = pack $ optS3SecretKey opts}
 
-removeImage :: Text -> Text -> Handler ()
-removeImage bucket name = do
-  res <- liftIO $ removeFile bucket name
+removeImage :: Options -> Text -> Text -> Handler ()
+removeImage opts bucket name = do
+  res <- liftIO $ removeFile (s3ConnInfo opts) bucket name
   case res of
     Left err -> do
       liftIO $ putStrLn (show err)

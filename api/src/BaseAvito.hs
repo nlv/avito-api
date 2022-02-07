@@ -250,9 +250,9 @@ data PostA
 instance ToJSON (PostA)
 instance FromJSON (PostA)
 
-postToA :: PostT Identity -> IO (Either MinioErr PostA)
-postToA h = do 
-  urls <- getFileUrls (h ^. postOid) 
+postToA :: ConnectInfo -> PostT Identity -> IO (Either MinioErr PostA)
+postToA s3ConnInfo h = do 
+  urls <- getFileUrls s3ConnInfo (h ^. postOid) 
   pure $ fmap (f h) urls
   where f :: PostT Identity -> [(Text, Text)] -> PostA
         f h1 urls = 

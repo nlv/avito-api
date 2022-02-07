@@ -20,15 +20,14 @@ import Data.Conduit.Combinators as Conduit
 
 
 
-makeBucketIfNotExists :: Text -> Minio ()
-makeBucketIfNotExists bucket = do
+makeBucketIfNotExists :: Region -> Text -> Minio ()
+makeBucketIfNotExists region bucket = do
   exists <- bucketExists bucket 
   if not exists then makeBucket bucket (Just region) else pure ()
 
 
-
-getFileUrls :: Text -> IO (Either MinioErr [(Text, Text)])
-getFileUrls bucket = liftIO $ do
+getFileUrls :: ConnectInfo -> Text -> IO (Either MinioErr [(Text, Text)])
+getFileUrls s3ConnInfo bucket = liftIO $ do
     runMinio s3ConnInfo $ do
       exists <- bucketExists bucket
       if exists
@@ -42,20 +41,9 @@ getFileUrls bucket = liftIO $ do
         -- getObjectUrl (ListItemObject i) = fmap Just $ presignedGetObjectUrl bucket (oiObject i) (60*60) [] []
         getObjectUrl _ = pure Nothing              
 
-removeFile :: Text -> Text -> IO (Either MinioErr ())
-removeFile bucket name = do
+removeFile :: ConnectInfo -> Text -> Text -> IO (Either MinioErr ())
+removeFile s3ConnInfo bucket name = do
   liftIO $ do
     runMinio s3ConnInfo $ do
       removeObject bucket name
 
-
-
-
-creds = Credentials { cAccessKey = "minioadmin", cSecretKey = "minioadmin"}
-
-        
-
-region :: Region
-region = "Omsk"
-
-s3ConnInfo = setCreds creds $ setRegion "Omsk" "http://localhost:9000"   
