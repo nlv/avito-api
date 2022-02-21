@@ -10,3 +10,5 @@ add_tfields_table [add_tnames_table add_opts_table] 2021-12-09T05:46:53Z Leon Ni
 insert_goods_types_opts [add_opts_vals_table] 2021-12-10T05:49:11Z Leon Nikitin <nlvomsk@gmail.com> # Добавляем опции для колонки goods_types
 add_for_house_tname [add_tnames_table insert_goods_types_opts] 2021-12-08T06:11:21Z Leon Nikitin <nlvomsk@gmail.com> # Добавляем раздел for_house в таблицу tnames
 
+insert_operations_types_opts [add_opts_vals_table] 2022-02-21T14:08:50Z Leon Nikitin <nlvomsk@gmail.com> # adding operaions_types opts
+add_realty_tname [add_tnames_table insert_operations_types_opts] 2022-02-21T14:01:13Z Leon Nikitin <nlvomsk@gmail.com> # adding realty tname
