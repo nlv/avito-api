@@ -12,3 +12,8 @@ add_for_house_tname [add_tnames_table insert_goods_types_opts] 2021-12-08T06:11:
 
 insert_operations_types_opts [add_opts_vals_table] 2022-02-21T14:08:50Z Leon Nikitin <nlvomsk@gmail.com> # adding operaions_types opts
 add_realty_tname [add_tnames_table insert_operations_types_opts] 2022-02-21T14:01:13Z Leon Nikitin <nlvomsk@gmail.com> # adding realty tname
+
+add_ttables [add_tnames_table] 2022-03-03T08:56:15Z Leon Nikitin <nlvomsk@gmail.com> # adding ttables table
+link_posts_to_ttables [add_ttables] 2022-03-03T09:09:47Z Leon Nikitin <nlvomsk@gmail.com> # linkting posts table to ttables
+insert_dump_ttable [add_for_house_tname link_posts_to_ttables] 2022-03-03T09:16:39Z Leon Nikitin <nlvomsk@gmail.com> # insert dump ttable and link all existing posts to it
+not_null_posts_ttable_id [insert_dump_ttable] 2022-03-03T10:56:19Z Leon Nikitin <nlvomsk@gmail.com> # set to not null tnames.ttable_id
